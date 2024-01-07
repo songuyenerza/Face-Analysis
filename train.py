@@ -148,6 +148,7 @@ def main():
     # Training loop
     best_val_accuracy = 0
     for epoch in range(cfg.num_epoch):  # Define num_epochs
+        epoch_start_time = time.time()
         for i, (inputs, labels) in enumerate(train_loader):
             inputs, labels = inputs.cuda(), labels.cuda()
 
@@ -162,9 +163,14 @@ def main():
 
             if (i+1) % 100 == 0:
                 val_loss, val_accuracy = evaluate(model, val_loader, criterion)
+                logging.info("------------------------------------------------------")
                 logging.info(f'Epoch [{epoch+1}/{cfg.num_epoch}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
                 logging.info(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
-                logging.info("------------------------------------------------------")
+
+        # End of epoch
+        epoch_time = time.time() - epoch_start_time
+        time_est = epoch_time * (cfg.num_epoch - epoch)
+        logging.info(f"Estimated time to finish : {time_est:.2f} seconds")
 
         if val_accuracy > best_val_accuracy:
             best_val_accuracy = val_accuracy
