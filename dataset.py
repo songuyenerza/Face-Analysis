@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
+import albumentations as A
 from PIL import Image, ImageEnhance
 
 
@@ -81,24 +82,52 @@ def random_crop(image, ratio = 0.07):
     return image
 
 class FaceDataset(Dataset):
-    def __init__(self, root_dir, json_path, dict_class):
+    def __init__(self, root_dir, json_path, dict_class, target_size=(112, 112)):
         super(FaceDataset, self).__init__()
         #   augment
+
+        # Custom padding transform
+        self.padding_transform = transforms.Lambda(lambda img: self.pad_to_square(img))
+
         self.transform = transforms.Compose(
             [transforms.ToPILImage(),
-            transforms.ColorJitter(brightness=0.5, contrast=0.5,saturation=0.3, hue=0.2 ),
-            transforms.RandomResizedCrop(size=(112,112),
-                                scale=(0.85, 1.15)),
+            self.padding_transform,
+            transforms.ColorJitter(brightness=0.3, contrast=0.3,saturation=0.3, hue=0.2 ),
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(10),
+            transforms.Resize((120, 120)),
+            transforms.RandomCrop(target_size),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
             ])
+
+        self.transform_albument = A.Compose([
+            A.Blur(blur_limit=(3, 7), p=0.2),
+            A.Defocus(radius=(1, 2), p=0.2),
+            A.GaussianBlur(blur_limit=(3, 5), p=0.2),
+            # A.RandomFog(fog_coef_lower=0.05, fog_coef_upper=0.1, p=0.1),              # have bug at this
+            A.RingingOvershoot(blur_limit=(5, 13), p=0.15),
+            A.Emboss(alpha=(0.2, 0.5), strength=(0.2, 0.7), always_apply=False, p=0.1),
+            A.RGBShift(r_shift_limit=50, g_shift_limit=50, b_shift_limit=50, always_apply=False, p=0.2),
+            A.RandomBrightness(limit=0.3, always_apply=False, p=0.2),
+            A.ImageCompression(quality_lower=10, quality_upper=100, p=0.2),
+        ])
+
         self.dict_class = dict_class
         self.root_dir = root_dir
         
         with open(json_path, 'r') as f:
             self.data = json.load(f)
+
+    def pad_to_square(self, pil_img):
+        width, height = pil_img.size
+        max_wh = max(width, height)
+        hp = int((max_wh - width) / 2)
+        vp = int((max_wh - height) / 2)
+        padding = (hp, vp, hp, vp)  # left, top, right, bottom
+        # For grayscale padding value (128, 128, 128) or normalized (0.5, 0.5, 0.5)
+        padding_color = (128, 128, 128)
+        return transforms.functional.pad(pil_img, padding, padding_color, 'constant')
 
     def __getitem__(self, index):
         data_item = self.data[str(index)]
@@ -106,6 +135,13 @@ class FaceDataset(Dataset):
 
         # end augment
         sample = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+        #   todo: sonnt
+        #   augment with albumentation
+        transformed = self.transform_albument(image=sample)
+        sample = transformed["image"]
+        #   //////////////////////////
+
         label = int(self.dict_class[data_item['labels']])
         label = torch.tensor(label, dtype=torch.long)
         if self.transform is not None:

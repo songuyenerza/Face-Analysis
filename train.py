@@ -169,7 +169,8 @@ def main():
         if val_accuracy > best_val_accuracy:
             best_val_accuracy = val_accuracy
             # Save model checkpoint
-            save_path = os.path.join(cfg["save_path"], f'model_epoch_{epoch+1}.pth')
+            # save_path = os.path.join(cfg["save_path"], f'model_epoch_{epoch+1}.pth')
+            save_path = os.path.join(cfg["save_path"], f'model.pth')
             save_model(model, opt, epoch, save_path)
             logging.info(f"Model saved: {save_path}")
 
