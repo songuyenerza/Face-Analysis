@@ -25,7 +25,43 @@ from utils.utils_logging import AverageMeter, init_logging
 from torch.distributed.algorithms.ddp_comm_hooks.default_hooks import fp16_compress_hook
 from backbones import get_model
 
+from sklearn.metrics import precision_recall_fscore_support
+import numpy as np
+
 torch.backends.cudnn.benchmark = True
+
+class LSR2(nn.Module):
+    def __init__(self, e):
+        super().__init__()
+        self.log_softmax = nn.LogSoftmax(dim=1)
+        self.e = e
+
+    def _one_hot(self, labels, classes, value=1):
+        one_hot = torch.zeros(labels.size(0), classes)
+        labels = labels.view(labels.size(0), -1)
+        value_added = torch.Tensor(labels.size(0), 1).fill_(value)
+        value_added = value_added.to(labels.device)
+        one_hot = one_hot.to(labels.device)
+        one_hot.scatter_add_(1, labels, value_added)
+        return one_hot
+
+    def _smooth_label(self, target, length, smooth_factor):
+        one_hot = self._one_hot(target, length, value=1 - smooth_factor)
+        mask = (one_hot==0)
+        balance_weight = torch.tensor([4.833, 1.607, 0.22977, 7.37, 2.7, 4.03]).to(one_hot.device)
+        ex_weight = balance_weight.expand(one_hot.size(0),-1)
+        resize_weight = ex_weight[mask].view(one_hot.size(0),-1)
+        resize_weight /= resize_weight.sum(dim=1, keepdim=True)
+        one_hot[mask] += (resize_weight*smooth_factor).view(-1)
+        
+#         one_hot += smooth_factor / length
+        return one_hot.to(target.device)
+
+    def forward(self, x, target):
+        smoothed_target = self._smooth_label(target, x.size(1), self.e)
+        x = self.log_softmax(x)
+        loss = torch.sum(- x * smoothed_target, dim=1)
+        return torch.mean(loss)
 
 def save_model(model, optimizer, epoch, path):
     torch.save({
@@ -34,11 +70,13 @@ def save_model(model, optimizer, epoch, path):
         'optimizer_state_dict': optimizer.state_dict(),
     }, path)
 
-def evaluate(model, val_loader, criterion):
+def evaluate(model, val_loader, criterion, num_classes):
     model.eval()  # Set the model to evaluation mode
     val_loss = 0.0
-    correct = 0
-    total = 0
+
+    # Prepare to track per-class metrics
+    all_labels = []
+    all_predictions = []
 
     with torch.no_grad():
         for inputs, labels in val_loader:
@@ -47,18 +85,27 @@ def evaluate(model, val_loader, criterion):
             loss = criterion(outputs, labels)
             val_loss += loss.item()
 
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            _, predicted = torch.max(outputs, 1)
+
+            all_labels.extend(labels.cpu().numpy())
+            all_predictions.extend(predicted.cpu().numpy())
 
     avg_loss = val_loss / len(val_loader)
-    accuracy = correct / total
-    return avg_loss, accuracy
+
+    # Calculate metrics per class
+    precision, recall, f1, _ = precision_recall_fscore_support(all_labels, all_predictions, labels=np.arange(num_classes), average=None)
+
+    # Calculating overall accuracy
+    accuracy = np.mean(np.array(all_labels) == np.array(all_predictions))
+
+    # Return the average loss, overall accuracy, and per-class metrics
+    return avg_loss, accuracy, precision, recall, f1
 
 class ClassificationModel(nn.Module):
     def __init__(self, backbone, cfg):
         super(ClassificationModel, self).__init__()
         self.backbone = backbone
+        self.fp16 = cfg.fp16
         #   if want freeze all backbone
         self.freeze_backbone()  # Freeze the backbone
         #   ////////////////////////////
@@ -66,7 +113,7 @@ class ClassificationModel(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(cfg.embedding_size, 256),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.3),
             nn.Linear(256, cfg.num_classes)
         )
 
@@ -76,8 +123,10 @@ class ClassificationModel(nn.Module):
 
     def forward(self, x):
         features = self.backbone(x)
-        out = self.classifier(features)
-        return out
+        with torch.cuda.amp.autocast(self.fp16):
+            out = self.classifier(features)
+        output = out.float() if self.fp16 else out
+        return output
 
 def main():
 
@@ -93,6 +142,9 @@ def main():
     #   dataset
     print("------------------------------------------------------")
     class_dict = {'Teenager' : '0', '40-50s': '1', '20-30s': '2', 'Baby': '3', 'Kid': '4', 'Senior': '5'}
+    data_balance_weight_np = [4.833, 1.607, 0.22977, 7.37, 2.7, 4.03]
+    # data_balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
+
     #   train   //
     trainset = FaceDataset(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_train.json", dict_class = class_dict)
 
@@ -140,37 +192,59 @@ def main():
             lr=cfg.lr / 512 * cfg.batch_size,
             momentum=0.9, weight_decay=cfg.weight_decay)
     #   todo: sonnt ...... >> add optimizer
-        
+    elif cfg.optimizer == 'adamw':
+        opt = torch.optim.AdamW(
+            params=[{'params': model.parameters()}],
+            lr=cfg.lr / 512 * cfg.batch_size)    
+    else:
+        raise
     # Loss function
-    criterion = nn.CrossEntropyLoss()
+    class_weights = torch.FloatTensor(data_balance_weight_np).cuda()
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
+    #   ///////////////////
 
     #   Training
     # Training loop
+    amp = torch.cuda.amp.grad_scaler.GradScaler(growth_interval=100)
     best_val_accuracy = 0
     for epoch in range(cfg.num_epoch):  # Define num_epochs
         epoch_start_time = time.time()
         for i, (inputs, labels) in enumerate(train_loader):
             inputs, labels = inputs.cuda(), labels.cuda()
-
             # Forward pass
             outputs = model(inputs)
-            loss = criterion(outputs, labels)
 
+            # loss = criterion(outputs, smoothed_labels)
+            loss = LSR2(0.3)(outputs, labels)
+            
             # Backward and optimize
+            if cfg.fp16 == True:
+                amp.scale(loss).backward()
+                amp.unscale_(opt)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
+                amp.step(opt)
+                amp.update()
+            else:
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
+                opt.step()
+
             opt.zero_grad()
-            loss.backward()
-            opt.step()
+            
 
             if (i+1) % 100 == 0:
-                val_loss, val_accuracy = evaluate(model, val_loader, criterion)
+                val_loss, val_accuracy, precision, recall, f1 = evaluate(model, val_loader, criterion, cfg.num_classes)
                 logging.info("------------------------------------------------------")
                 logging.info(f'Epoch [{epoch+1}/{cfg.num_epoch}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
                 logging.info(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
+                logging.info(f'Precision per class: {precision}')
+                logging.info(f'Recall per class: {recall}')
+                logging.info(f'F1 Score per class: {f1}')
 
         # End of epoch
         epoch_time = time.time() - epoch_start_time
-        time_est = epoch_time * (cfg.num_epoch - epoch)
-        logging.info(f"Estimated time to finish : {time_est:.2f} seconds")
+        time_est = epoch_time * (cfg.num_epoch - epoch) / 3600
+        logging.info(f"Estimated time to finish : {time_est:.2f} hours")
 
         if val_accuracy > best_val_accuracy:
             best_val_accuracy = val_accuracy
