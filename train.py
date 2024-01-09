@@ -203,9 +203,9 @@ def main():
     # print(backbone)
     # Create the full model
     model = ClassificationModel(backbone, cfg).cuda()
-    print("[init model ClassificationModel]")
-    logging.info("[init model ClassificationModel]")
+    # model.load_state_dict(torch.load('./model_age/model_acc87.pth', map_location='cuda')['model_state_dict'])
 
+    logging.info("[init model ClassificationModel]")
 
     model.train()
     model.cuda()
