@@ -5,3 +5,4 @@
 train.txt
 *.txt
 __pycache__/
+pretrained/
