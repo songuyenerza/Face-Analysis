@@ -2030,3 +2030,235 @@
 2024-01-09 09:40:06,915 - INFO - [init model ok]
 2024-01-09 09:40:06,916 - INFO - [config] {'num_classes': 6, 'margin_list': [1.0, 0.0, 0.4], 'network': 'r50', 'resume': False, 'output': None, 'embedding_size': 512, 'sample_rate': 1.0, 'interclass_filtering_threshold': 0, 'fp16': True, 'weight_decay': 0.0005, 'batch_size': 128, 'optimizer': 'adamw', 'lr': 0.05, 'verbose': 2000, 'dali': False, 'lr_name': 'cosine', 'warmup_lr': 5e-07, 'min_lr': 5e-06, 'rec': '../../../data/face_cropped/images', 'num_epoch': 200, 'warmup_epoch': 0, 'val_targets': [], 'save_path': './model_age', 'log': 'train.txt', 'warmup_step': 1000, 'total_step': 20000}
 2024-01-09 09:40:06,924 - INFO - [init model ClassificationModel]
+2024-01-09 09:46:58,001 - INFO - ------------------------------------------------------
+2024-01-09 09:46:58,002 - INFO - Epoch [8/200], Step [100/101], Loss: 1.2230
+2024-01-09 09:46:58,002 - INFO - Validation Loss: 0.7240, Validation Accuracy: 0.8258
+2024-01-09 09:46:59,118 - INFO - Estimated time to finish : 1614.96 minutes
+2024-01-09 09:47:01,143 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 09:53:24,996 - INFO - ------------------------------------------------------
+2024-01-09 09:53:24,998 - INFO - Epoch [9/200], Step [100/101], Loss: 1.1685
+2024-01-09 09:53:24,998 - INFO - Validation Loss: 0.7146, Validation Accuracy: 0.8217
+2024-01-09 09:53:26,098 - INFO - Estimated time to finish : 1231.86 minutes
+2024-01-09 09:59:46,392 - INFO - ------------------------------------------------------
+2024-01-09 09:59:46,393 - INFO - Epoch [10/200], Step [100/101], Loss: 1.1714
+2024-01-09 09:59:46,393 - INFO - Validation Loss: 0.7068, Validation Accuracy: 0.8240
+2024-01-09 09:59:47,498 - INFO - Estimated time to finish : 1214.12 minutes
+2024-01-09 10:06:22,320 - INFO - ------------------------------------------------------
+2024-01-09 10:06:22,321 - INFO - Epoch [11/200], Step [100/101], Loss: 1.1730
+2024-01-09 10:06:22,321 - INFO - Validation Loss: 0.6781, Validation Accuracy: 0.8290
+2024-01-09 10:06:23,407 - INFO - Estimated time to finish : 1253.71 minutes
+2024-01-09 10:06:25,274 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 10:12:53,414 - INFO - ------------------------------------------------------
+2024-01-09 10:12:53,415 - INFO - Epoch [12/200], Step [100/101], Loss: 1.1762
+2024-01-09 10:12:53,415 - INFO - Validation Loss: 0.6873, Validation Accuracy: 0.8267
+2024-01-09 10:12:54,534 - INFO - Estimated time to finish : 1226.17 minutes
+2024-01-09 10:19:37,513 - INFO - ------------------------------------------------------
+2024-01-09 10:19:37,515 - INFO - Epoch [13/200], Step [100/101], Loss: 1.1350
+2024-01-09 10:19:37,515 - INFO - Validation Loss: 0.6780, Validation Accuracy: 0.8313
+2024-01-09 10:19:38,720 - INFO - Estimated time to finish : 1266.45 minutes
+2024-01-09 10:19:40,721 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 10:26:25,038 - INFO - ------------------------------------------------------
+2024-01-09 10:26:25,039 - INFO - Epoch [14/200], Step [100/101], Loss: 1.2037
+2024-01-09 10:26:25,039 - INFO - Validation Loss: 0.6803, Validation Accuracy: 0.8373
+2024-01-09 10:26:26,355 - INFO - Estimated time to finish : 1264.22 minutes
+2024-01-09 10:26:28,218 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 10:33:17,104 - INFO - ------------------------------------------------------
+2024-01-09 10:33:17,106 - INFO - Epoch [15/200], Step [100/101], Loss: 1.1274
+2024-01-09 10:33:17,106 - INFO - Validation Loss: 0.6820, Validation Accuracy: 0.8313
+2024-01-09 10:33:18,216 - INFO - Estimated time to finish : 1270.99 minutes
+2024-01-09 10:40:06,101 - INFO - ------------------------------------------------------
+2024-01-09 10:40:06,102 - INFO - Epoch [16/200], Step [100/101], Loss: 1.1643
+2024-01-09 10:40:06,102 - INFO - Validation Loss: 0.6813, Validation Accuracy: 0.8373
+2024-01-09 10:40:07,565 - INFO - Estimated time to finish : 1262.16 minutes
+2024-01-09 10:47:00,770 - INFO - ------------------------------------------------------
+2024-01-09 10:47:00,772 - INFO - Epoch [17/200], Step [100/101], Loss: 1.1455
+2024-01-09 10:47:00,772 - INFO - Validation Loss: 0.6668, Validation Accuracy: 0.8438
+2024-01-09 10:47:01,879 - INFO - Estimated time to finish : 1270.56 minutes
+2024-01-09 10:47:03,615 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 10:53:04,716 - INFO - ------------------------------------------------------
+2024-01-09 10:53:04,717 - INFO - Epoch [18/200], Step [100/101], Loss: 1.1302
+2024-01-09 10:53:04,717 - INFO - Validation Loss: 0.6569, Validation Accuracy: 0.8438
+2024-01-09 10:53:05,806 - INFO - Estimated time to finish : 1104.68 minutes
+2024-01-09 10:58:53,097 - INFO - ------------------------------------------------------
+2024-01-09 10:58:53,098 - INFO - Epoch [19/200], Step [100/101], Loss: 1.1903
+2024-01-09 10:58:53,098 - INFO - Validation Loss: 0.6574, Validation Accuracy: 0.8405
+2024-01-09 10:58:54,199 - INFO - Estimated time to finish : 1056.79 minutes
+2024-01-09 11:05:10,127 - INFO - ------------------------------------------------------
+2024-01-09 11:05:10,129 - INFO - Epoch [20/200], Step [100/101], Loss: 1.1225
+2024-01-09 11:05:10,129 - INFO - Validation Loss: 0.6770, Validation Accuracy: 0.8460
+2024-01-09 11:05:11,233 - INFO - Estimated time to finish : 1137.38 minutes
+2024-01-09 11:05:13,028 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 11:11:38,876 - INFO - ------------------------------------------------------
+2024-01-09 11:11:38,878 - INFO - Epoch [21/200], Step [100/101], Loss: 1.1277
+2024-01-09 11:11:38,878 - INFO - Validation Loss: 0.6623, Validation Accuracy: 0.8511
+2024-01-09 11:11:40,032 - INFO - Estimated time to finish : 1161.01 minutes
+2024-01-09 11:11:41,940 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 11:18:02,183 - INFO - ------------------------------------------------------
+2024-01-09 11:18:02,184 - INFO - Epoch [22/200], Step [100/101], Loss: 1.1544
+2024-01-09 11:18:02,185 - INFO - Validation Loss: 0.6614, Validation Accuracy: 0.8525
+2024-01-09 11:18:03,282 - INFO - Estimated time to finish : 1137.67 minutes
+2024-01-09 11:18:06,756 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 11:24:36,568 - INFO - ------------------------------------------------------
+2024-01-09 11:24:36,568 - INFO - Epoch [23/200], Step [100/101], Loss: 1.1423
+2024-01-09 11:24:36,568 - INFO - Validation Loss: 0.6501, Validation Accuracy: 0.8479
+2024-01-09 11:24:37,651 - INFO - Estimated time to finish : 1159.65 minutes
+2024-01-09 11:31:15,181 - INFO - ------------------------------------------------------
+2024-01-09 11:31:15,182 - INFO - Epoch [24/200], Step [100/101], Loss: 1.1185
+2024-01-09 11:31:15,182 - INFO - Validation Loss: 0.6516, Validation Accuracy: 0.8493
+2024-01-09 11:31:16,262 - INFO - Estimated time to finish : 1175.90 minutes
+2024-01-09 11:37:46,919 - INFO - ------------------------------------------------------
+2024-01-09 11:37:46,921 - INFO - Epoch [25/200], Step [100/101], Loss: 1.1499
+2024-01-09 11:37:46,921 - INFO - Validation Loss: 0.6554, Validation Accuracy: 0.8451
+2024-01-09 11:37:48,010 - INFO - Estimated time to finish : 1149.13 minutes
+2024-01-09 11:44:26,343 - INFO - ------------------------------------------------------
+2024-01-09 11:44:26,345 - INFO - Epoch [26/200], Step [100/101], Loss: 1.1680
+2024-01-09 11:44:26,345 - INFO - Validation Loss: 0.6688, Validation Accuracy: 0.8497
+2024-01-09 11:44:27,435 - INFO - Estimated time to finish : 1164.99 minutes
+2024-01-09 11:51:06,555 - INFO - ------------------------------------------------------
+2024-01-09 11:51:06,556 - INFO - Epoch [27/200], Step [100/101], Loss: 1.1319
+2024-01-09 11:51:06,556 - INFO - Validation Loss: 0.6605, Validation Accuracy: 0.8488
+2024-01-09 11:51:07,657 - INFO - Estimated time to finish : 1160.64 minutes
+2024-01-09 11:57:53,842 - INFO - ------------------------------------------------------
+2024-01-09 11:57:53,844 - INFO - Epoch [28/200], Step [100/101], Loss: 1.1516
+2024-01-09 11:57:53,844 - INFO - Validation Loss: 0.6361, Validation Accuracy: 0.8548
+2024-01-09 11:57:55,186 - INFO - Estimated time to finish : 1175.04 minutes
+2024-01-09 11:57:56,979 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 12:04:41,760 - INFO - ------------------------------------------------------
+2024-01-09 12:04:41,761 - INFO - Epoch [29/200], Step [100/101], Loss: 1.1342
+2024-01-09 12:04:41,761 - INFO - Validation Loss: 0.6464, Validation Accuracy: 0.8529
+2024-01-09 12:04:42,979 - INFO - Estimated time to finish : 1163.87 minutes
+2024-01-09 12:11:29,955 - INFO - ------------------------------------------------------
+2024-01-09 12:11:29,956 - INFO - Epoch [30/200], Step [100/101], Loss: 1.1465
+2024-01-09 12:11:29,956 - INFO - Validation Loss: 0.6370, Validation Accuracy: 0.8529
+2024-01-09 12:11:31,054 - INFO - Estimated time to finish : 1163.01 minutes
+2024-01-09 12:18:13,018 - INFO - ------------------------------------------------------
+2024-01-09 12:18:13,019 - INFO - Epoch [31/200], Step [100/101], Loss: 1.1528
+2024-01-09 12:18:13,019 - INFO - Validation Loss: 0.6609, Validation Accuracy: 0.8562
+2024-01-09 12:18:14,139 - INFO - Estimated time to finish : 1142.07 minutes
+2024-01-09 12:18:16,378 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 12:24:59,114 - INFO - ------------------------------------------------------
+2024-01-09 12:24:59,115 - INFO - Epoch [32/200], Step [100/101], Loss: 1.1773
+2024-01-09 12:24:59,116 - INFO - Validation Loss: 0.6349, Validation Accuracy: 0.8552
+2024-01-09 12:25:00,225 - INFO - Estimated time to finish : 1137.50 minutes
+2024-01-09 12:31:17,043 - INFO - ------------------------------------------------------
+2024-01-09 12:31:17,044 - INFO - Epoch [33/200], Step [100/101], Loss: 1.1420
+2024-01-09 12:31:17,044 - INFO - Validation Loss: 0.6443, Validation Accuracy: 0.8534
+2024-01-09 12:31:18,124 - INFO - Estimated time to finish : 1058.12 minutes
+2024-01-09 12:37:06,206 - INFO - ------------------------------------------------------
+2024-01-09 12:37:06,207 - INFO - Epoch [34/200], Step [100/101], Loss: 1.1016
+2024-01-09 12:37:06,207 - INFO - Validation Loss: 0.6221, Validation Accuracy: 0.8571
+2024-01-09 12:37:07,275 - INFO - Estimated time to finish : 971.80 minutes
+2024-01-09 12:37:09,046 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 12:43:21,155 - INFO - ------------------------------------------------------
+2024-01-09 12:43:21,155 - INFO - Epoch [35/200], Step [100/101], Loss: 1.1608
+2024-01-09 12:43:21,155 - INFO - Validation Loss: 0.6410, Validation Accuracy: 0.8539
+2024-01-09 12:43:22,248 - INFO - Estimated time to finish : 1032.52 minutes
+2024-01-09 12:50:03,403 - INFO - ------------------------------------------------------
+2024-01-09 12:50:03,404 - INFO - Epoch [36/200], Step [100/101], Loss: 1.1388
+2024-01-09 12:50:03,404 - INFO - Validation Loss: 0.6215, Validation Accuracy: 0.8635
+2024-01-09 12:50:04,612 - INFO - Estimated time to finish : 1106.50 minutes
+2024-01-09 12:50:06,603 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 12:56:58,265 - INFO - ------------------------------------------------------
+2024-01-09 12:56:58,267 - INFO - Epoch [37/200], Step [100/101], Loss: 1.1322
+2024-01-09 12:56:58,267 - INFO - Validation Loss: 0.6424, Validation Accuracy: 0.8474
+2024-01-09 12:57:00,970 - INFO - Estimated time to finish : 1132.60 minutes
+2024-01-09 13:03:57,562 - INFO - ------------------------------------------------------
+2024-01-09 13:03:57,564 - INFO - Epoch [38/200], Step [100/101], Loss: 1.1358
+2024-01-09 13:03:57,564 - INFO - Validation Loss: 0.6365, Validation Accuracy: 0.8543
+2024-01-09 13:03:58,936 - INFO - Estimated time to finish : 1135.47 minutes
+2024-01-09 13:10:51,054 - INFO - ------------------------------------------------------
+2024-01-09 13:10:51,055 - INFO - Epoch [39/200], Step [100/101], Loss: 1.1431
+2024-01-09 13:10:51,055 - INFO - Validation Loss: 0.6398, Validation Accuracy: 0.8566
+2024-01-09 13:10:53,923 - INFO - Estimated time to finish : 1120.46 minutes
+2024-01-09 13:17:48,601 - INFO - ------------------------------------------------------
+2024-01-09 13:17:48,603 - INFO - Epoch [40/200], Step [100/101], Loss: 1.1329
+2024-01-09 13:17:48,603 - INFO - Validation Loss: 0.6324, Validation Accuracy: 0.8635
+2024-01-09 13:17:52,518 - INFO - Estimated time to finish : 1123.23 minutes
+2024-01-09 13:24:52,464 - INFO - ------------------------------------------------------
+2024-01-09 13:24:52,466 - INFO - Epoch [41/200], Step [100/101], Loss: 1.1112
+2024-01-09 13:24:52,466 - INFO - Validation Loss: 0.6216, Validation Accuracy: 0.8594
+2024-01-09 13:24:56,062 - INFO - Estimated time to finish : 1129.45 minutes
+2024-01-09 13:32:00,497 - INFO - ------------------------------------------------------
+2024-01-09 13:32:00,500 - INFO - Epoch [42/200], Step [100/101], Loss: 1.0944
+2024-01-09 13:32:00,500 - INFO - Validation Loss: 0.6273, Validation Accuracy: 0.8612
+2024-01-09 13:32:04,266 - INFO - Estimated time to finish : 1134.74 minutes
+2024-01-09 13:39:04,142 - INFO - ------------------------------------------------------
+2024-01-09 13:39:04,144 - INFO - Epoch [43/200], Step [100/101], Loss: 1.1498
+2024-01-09 13:39:04,144 - INFO - Validation Loss: 0.6150, Validation Accuracy: 0.8649
+2024-01-09 13:39:08,088 - INFO - Estimated time to finish : 1116.06 minutes
+2024-01-09 13:39:10,035 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 13:46:09,816 - INFO - ------------------------------------------------------
+2024-01-09 13:46:09,817 - INFO - Epoch [44/200], Step [100/101], Loss: 1.0912
+2024-01-09 13:46:09,817 - INFO - Validation Loss: 0.6402, Validation Accuracy: 0.8470
+2024-01-09 13:46:13,902 - INFO - Estimated time to finish : 1109.12 minutes
+2024-01-09 13:53:50,107 - INFO - ------------------------------------------------------
+2024-01-09 13:53:50,109 - INFO - Epoch [45/200], Step [100/101], Loss: 1.0775
+2024-01-09 13:53:50,109 - INFO - Validation Loss: 0.6168, Validation Accuracy: 0.8548
+2024-01-09 13:53:51,336 - INFO - Estimated time to finish : 1189.32 minutes
+2024-01-09 14:01:54,147 - INFO - ------------------------------------------------------
+2024-01-09 14:01:54,148 - INFO - Epoch [46/200], Step [100/101], Loss: 1.1327
+2024-01-09 14:01:54,149 - INFO - Validation Loss: 0.6276, Validation Accuracy: 0.8635
+2024-01-09 14:01:56,160 - INFO - Estimated time to finish : 1252.46 minutes
+2024-01-09 14:09:40,103 - INFO - ------------------------------------------------------
+2024-01-09 14:09:40,104 - INFO - Epoch [47/200], Step [100/101], Loss: 1.1515
+2024-01-09 14:09:40,105 - INFO - Validation Loss: 0.6288, Validation Accuracy: 0.8640
+2024-01-09 14:09:41,920 - INFO - Estimated time to finish : 1195.45 minutes
+2024-01-09 14:16:52,597 - INFO - ------------------------------------------------------
+2024-01-09 14:16:52,599 - INFO - Epoch [48/200], Step [100/101], Loss: 1.0793
+2024-01-09 14:16:52,599 - INFO - Validation Loss: 0.6192, Validation Accuracy: 0.8658
+2024-01-09 14:16:53,688 - INFO - Estimated time to finish : 1101.01 minutes
+2024-01-09 14:16:55,620 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 14:23:33,790 - INFO - ------------------------------------------------------
+2024-01-09 14:23:33,791 - INFO - Epoch [49/200], Step [100/101], Loss: 1.1409
+2024-01-09 14:23:33,791 - INFO - Validation Loss: 0.6216, Validation Accuracy: 0.8598
+2024-01-09 14:23:34,996 - INFO - Estimated time to finish : 1011.75 minutes
+2024-01-09 14:30:16,613 - INFO - ------------------------------------------------------
+2024-01-09 14:30:16,613 - INFO - Epoch [50/200], Step [100/101], Loss: 1.1209
+2024-01-09 14:30:16,613 - INFO - Validation Loss: 0.6089, Validation Accuracy: 0.8603
+2024-01-09 14:30:20,563 - INFO - Estimated time to finish : 1020.67 minutes
+2024-01-09 14:37:15,917 - INFO - ------------------------------------------------------
+2024-01-09 14:37:15,919 - INFO - Epoch [51/200], Step [100/101], Loss: 1.1108
+2024-01-09 14:37:15,919 - INFO - Validation Loss: 0.6206, Validation Accuracy: 0.8626
+2024-01-09 14:37:18,300 - INFO - Estimated time to finish : 1044.34 minutes
+2024-01-09 14:44:09,479 - INFO - ------------------------------------------------------
+2024-01-09 14:44:09,480 - INFO - Epoch [52/200], Step [100/101], Loss: 1.1443
+2024-01-09 14:44:09,480 - INFO - Validation Loss: 0.6211, Validation Accuracy: 0.8640
+2024-01-09 14:44:12,991 - INFO - Estimated time to finish : 1029.82 minutes
+2024-01-09 14:51:14,825 - INFO - ------------------------------------------------------
+2024-01-09 14:51:14,827 - INFO - Epoch [53/200], Step [100/101], Loss: 1.1309
+2024-01-09 14:51:14,827 - INFO - Validation Loss: 0.6194, Validation Accuracy: 0.8663
+2024-01-09 14:51:18,889 - INFO - Estimated time to finish : 1050.55 minutes
+2024-01-09 14:51:20,886 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 14:58:27,723 - INFO - ------------------------------------------------------
+2024-01-09 14:58:27,724 - INFO - Epoch [54/200], Step [100/101], Loss: 1.1135
+2024-01-09 14:58:27,724 - INFO - Validation Loss: 0.6144, Validation Accuracy: 0.8621
+2024-01-09 14:58:31,764 - INFO - Estimated time to finish : 1055.65 minutes
+2024-01-09 15:05:38,948 - INFO - ------------------------------------------------------
+2024-01-09 15:05:38,950 - INFO - Epoch [55/200], Step [100/101], Loss: 1.0988
+2024-01-09 15:05:38,950 - INFO - Validation Loss: 0.6153, Validation Accuracy: 0.8681
+2024-01-09 15:05:43,013 - INFO - Estimated time to finish : 1049.37 minutes
+2024-01-09 15:05:44,820 - INFO - Model saved: ./model_age/model.pth
+2024-01-09 15:12:54,768 - INFO - ------------------------------------------------------
+2024-01-09 15:12:54,768 - INFO - Epoch [56/200], Step [100/101], Loss: 1.0936
+2024-01-09 15:12:54,768 - INFO - Validation Loss: 0.6050, Validation Accuracy: 0.8612
+2024-01-09 15:12:58,716 - INFO - Estimated time to finish : 1048.58 minutes
+2024-01-09 15:20:04,526 - INFO - ------------------------------------------------------
+2024-01-09 15:20:04,528 - INFO - Epoch [57/200], Step [100/101], Loss: 1.1113
+2024-01-09 15:20:04,528 - INFO - Validation Loss: 0.6090, Validation Accuracy: 0.8626
+2024-01-09 15:20:08,472 - INFO - Estimated time to finish : 1031.41 minutes
+2024-01-09 15:27:17,931 - INFO - ------------------------------------------------------
+2024-01-09 15:27:17,932 - INFO - Epoch [58/200], Step [100/101], Loss: 1.1114
+2024-01-09 15:27:17,932 - INFO - Validation Loss: 0.6136, Validation Accuracy: 0.8640
+2024-01-09 15:27:21,987 - INFO - Estimated time to finish : 1033.21 minutes
+2024-01-09 15:34:31,864 - INFO - ------------------------------------------------------
+2024-01-09 15:34:31,865 - INFO - Epoch [59/200], Step [100/101], Loss: 1.1142
+2024-01-09 15:34:31,865 - INFO - Validation Loss: 0.6263, Validation Accuracy: 0.8575
+2024-01-09 15:34:35,929 - INFO - Estimated time to finish : 1026.99 minutes
+2024-01-09 15:41:49,636 - INFO - ------------------------------------------------------
+2024-01-09 15:41:49,638 - INFO - Epoch [60/200], Step [100/101], Loss: 1.1195
+2024-01-09 15:41:49,638 - INFO - Validation Loss: 0.6144, Validation Accuracy: 0.8548
+2024-01-09 15:41:53,712 - INFO - Estimated time to finish : 1028.79 minutes
+2024-01-09 15:49:05,040 - INFO - ------------------------------------------------------
+2024-01-09 15:49:05,041 - INFO - Epoch [61/200], Step [100/101], Loss: 1.1108
+2024-01-09 15:49:05,042 - INFO - Validation Loss: 0.6072, Validation Accuracy: 0.8580
+2024-01-09 15:49:09,094 - INFO - Estimated time to finish : 1015.89 minutes

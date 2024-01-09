@@ -92,7 +92,7 @@ class FaceDataset(Dataset):
         self.transform = transforms.Compose(
             [transforms.ToPILImage(),
             self.padding_transform,
-            transforms.ColorJitter(brightness=0.3, contrast=0.3,saturation=0.3, hue=0.2 ),
+            transforms.ColorJitter(brightness=0.3, contrast=0.3,saturation=0.15, hue=0.2 ),
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(10),
             transforms.Resize((120, 120)),

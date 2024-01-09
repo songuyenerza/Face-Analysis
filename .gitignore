@@ -2,5 +2,6 @@
 *.png
 *.pt
 *.pth
-
+train.txt
+*.txt
 __pycache__/
