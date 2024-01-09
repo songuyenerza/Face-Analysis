@@ -120,7 +120,7 @@ class ClassificationModel(nn.Module):
         self.backbone = backbone
         self.fp16 = cfg.fp16
         #   if want freeze all backbone
-        self.freeze_backbone_custum()  # Freeze the backbone
+        # self.freeze_backbone_custum()  # Freeze the backbone
         #   ////////////////////////////
         # Replace 'num_classes' with the actual number of classes
         self.head = nn.Linear(cfg.embedding_size, cfg.num_classes)
@@ -224,14 +224,6 @@ def main():
     else:
         raise
 
-
-    lr_scheduler = build_scheduler(
-        optimizer=opt,
-        lr_name=cfg.lr_name,
-        warmup_lr=cfg.warmup_lr,
-        min_lr=cfg.min_lr,
-        num_steps=cfg.total_step,
-        warmup_steps=cfg.warmup_step)
     #   ///////////////////
     # Loss function
     criterion = nn.CrossEntropyLoss()

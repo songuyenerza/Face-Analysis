@@ -17,7 +17,7 @@ config.fp16 = True
 config.weight_decay = 5e-4
 config.batch_size = 128
 config.optimizer = "adamw"
-config.lr = 0.05
+config.lr = 0.1
 config.verbose = 2000
 config.dali = False
 
@@ -31,8 +31,8 @@ config.warmup_epoch = 0
 config.val_targets = []
 
 
-config.save_path = './model_age'
-config.log = 'train.txt'
+config.save_path = './model_age_v2'
+config.log = 'train_v2.txt'
 
 
 config.warmup_step = 1000
