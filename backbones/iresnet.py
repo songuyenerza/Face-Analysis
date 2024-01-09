@@ -155,11 +155,12 @@ class IResNet(nn.Module):
             x = self.layer3(x)
             x = self.layer4(x)
             x = self.bn2(x)
+            cam = x
             x = torch.flatten(x, 1)
             x = self.dropout(x)
         x = self.fc(x.float() if self.fp16 else x)
         x = self.features(x)
-        return x
+        return x, cam
 
 
 def _iresnet(arch, block, layers, pretrained, progress, **kwargs):

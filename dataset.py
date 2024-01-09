@@ -99,6 +99,8 @@ class FaceDataset(Dataset):
             transforms.RandomCrop(target_size),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+            transforms.RandomErasing(scale=(0.02, 0.1))
+
             ])
 
         self.transform_albument = A.Compose([
@@ -146,7 +148,10 @@ class FaceDataset(Dataset):
         label = torch.tensor(label, dtype=torch.long)
         if self.transform is not None:
             sample = self.transform(sample)
-        return sample, label
+        sample = torch.tensor(np.asarray(sample))
+        img_flip = transforms.RandomHorizontalFlip(p=1.0)(sample)
+        
+        return sample, label, img_flip
 
     def __len__(self):
         return len(self.data)

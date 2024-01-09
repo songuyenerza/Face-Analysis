@@ -3,3 +3,4 @@ opencv-python
 scikit-learn
 tensorboard
 albumentations==1.3.0
+timm

@@ -16,16 +16,24 @@ config.interclass_filtering_threshold = 0
 config.fp16 = True
 config.weight_decay = 5e-4
 config.batch_size = 128
-config.optimizer = "sgd"
+config.optimizer = "adamw"
 config.lr = 0.05
 config.verbose = 2000
 config.dali = False
 
+config.lr_name = 'cosine'
+config.warmup_lr = 5e-7
+config.min_lr = 5e-6
+
 config.rec = "../../../data/face_cropped/images"
-config.num_epoch = 100
+config.num_epoch = 200
 config.warmup_epoch = 0
 config.val_targets = []
 
 
 config.save_path = './model_age'
 config.log = 'train.txt'
+
+
+config.warmup_step = 1000
+config.total_step = 20000
