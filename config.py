@@ -15,17 +15,17 @@ config.sample_rate = 1.0
 config.interclass_filtering_threshold = 0
 config.fp16 = True
 config.weight_decay = 5e-4
-config.batch_size = 128
-config.optimizer = "sgd"
-config.lr = 0.05
+config.batch_size = 64
+config.optimizer = "adamw"
+config.lr = 0.03
 config.verbose = 2000
 config.dali = False
 
 config.rec = "../../../data/face_cropped/images"
-config.num_epoch = 100
+config.num_epoch = 200
 config.warmup_epoch = 0
 config.val_targets = []
 
 
-config.save_path = './model_age_v1'
+config.save_path = './model_age_v1_not_freeze'
 config.log = 'train.txt'

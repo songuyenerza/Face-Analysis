@@ -92,25 +92,26 @@ class FaceDataset(Dataset):
         self.transform = transforms.Compose(
             [transforms.ToPILImage(),
             self.padding_transform,
-            transforms.ColorJitter(brightness=0.3, contrast=0.3,saturation=0.3, hue=0.2 ),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2,saturation=0.15, hue=0.15 ),
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(10),
             transforms.Resize((120, 120)),
             transforms.RandomCrop(target_size),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+            transforms.RandomErasing(scale=(0.02, 0.1))
             ])
 
         self.transform_albument = A.Compose([
-            A.Blur(blur_limit=(3, 7), p=0.2),
-            A.Defocus(radius=(1, 2), p=0.2),
-            A.GaussianBlur(blur_limit=(3, 5), p=0.2),
+            A.Blur(blur_limit=(3, 7), p=0.15),
+            A.Defocus(radius=(1, 2), p=0.15),
+            A.GaussianBlur(blur_limit=(3, 5), p=0.15),
             # A.RandomFog(fog_coef_lower=0.05, fog_coef_upper=0.1, p=0.1),              # have bug at this
             A.RingingOvershoot(blur_limit=(5, 13), p=0.15),
             A.Emboss(alpha=(0.2, 0.5), strength=(0.2, 0.7), always_apply=False, p=0.1),
-            A.RGBShift(r_shift_limit=50, g_shift_limit=50, b_shift_limit=50, always_apply=False, p=0.2),
-            A.RandomBrightness(limit=0.3, always_apply=False, p=0.2),
-            A.ImageCompression(quality_lower=10, quality_upper=100, p=0.2),
+            A.RGBShift(r_shift_limit=20, g_shift_limit=20, b_shift_limit=20, always_apply=False, p=0.1),
+            A.RandomBrightness(limit=0.2, always_apply=False, p=0.2),
+            A.ImageCompression(quality_lower=20, quality_upper=100, p=0.2),
         ])
 
         self.dict_class = dict_class
@@ -146,6 +147,7 @@ class FaceDataset(Dataset):
         label = torch.tensor(label, dtype=torch.long)
         if self.transform is not None:
             sample = self.transform(sample)
+        sample = torch.tensor(np.asarray(sample))
         return sample, label
 
     def __len__(self):

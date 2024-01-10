@@ -25,16 +25,21 @@ from utils.utils_logging import AverageMeter, init_logging
 from torch.distributed.algorithms.ddp_comm_hooks.default_hooks import fp16_compress_hook
 from backbones import get_model
 
+from utils.utils_distributed_sampler import DistributedSampler
+from utils.utils_distributed_sampler import get_dist_info, worker_init_fn
+from functools import partial
+
 from sklearn.metrics import precision_recall_fscore_support
 import numpy as np
 
 torch.backends.cudnn.benchmark = True
 
 class LSR2(nn.Module):
-    def __init__(self, e):
+    def __init__(self, e, data_balance_weight_np):
         super().__init__()
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.e = e
+        self.data_balance_weight_np = data_balance_weight_np
 
     def _one_hot(self, labels, classes, value=1):
         one_hot = torch.zeros(labels.size(0), classes)
@@ -48,7 +53,7 @@ class LSR2(nn.Module):
     def _smooth_label(self, target, length, smooth_factor):
         one_hot = self._one_hot(target, length, value=1 - smooth_factor)
         mask = (one_hot==0)
-        balance_weight = torch.tensor([4.833, 1.607, 0.22977, 7.37, 2.7, 4.03]).to(one_hot.device)
+        balance_weight = torch.tensor(self.data_balance_weight_np).to(one_hot.device)
         ex_weight = balance_weight.expand(one_hot.size(0),-1)
         resize_weight = ex_weight[mask].view(one_hot.size(0),-1)
         resize_weight /= resize_weight.sum(dim=1, keepdim=True)
@@ -116,10 +121,18 @@ class ClassificationModel(nn.Module):
             nn.Dropout(0.3),
             nn.Linear(256, cfg.num_classes)
         )
+        # self.classifier = nn.Linear(cfg.embedding_size, cfg.num_classes)
 
     def freeze_backbone(self):
         for param in self.backbone.parameters():
             param.requires_grad = False
+
+    def freeze_backbone_custum(self):
+        i = 0
+        for param in self.backbone.parameters():
+            i += 1
+            if i < 236: #459 
+                param.requires_grad = False
 
     def forward(self, x):
         features = self.backbone(x)
@@ -129,9 +142,10 @@ class ClassificationModel(nn.Module):
         return output
 
 def main():
-
+    if not os.path.exists(cfg.save_path):
+        os.makedirs(cfg.save_path)
     #   logging
-    log_filename = cfg.log
+    log_filename =   os.path.join(cfg.save_path, cfg.log)
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     fh = logging.FileHandler(log_filename)
@@ -142,16 +156,30 @@ def main():
     #   dataset
     print("------------------------------------------------------")
     class_dict = {'Teenager' : '0', '40-50s': '1', '20-30s': '2', 'Baby': '3', 'Kid': '4', 'Senior': '5'}
-    data_balance_weight_np = [4.833, 1.607, 0.22977, 7.37, 2.7, 4.03]
+    data_balance_weight_np = [5, 2, 0.22977, 7.37, 3, 4.03]
     # data_balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
 
     #   train   //
     trainset = FaceDataset(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_train.json", dict_class = class_dict)
 
-    train_loader = data.DataLoader(
-        dataset=trainset, batch_size=cfg.batch_size, shuffle=True,
-        num_workers=16, pin_memory=True, drop_last=True)
-    
+    # train_loader = data.DataLoader(
+    #     dataset=trainset, batch_size=cfg.batch_size, shuffle=True,
+    #     num_workers=16, pin_memory=True, drop_last=True)
+
+    #   ///////////////////////////////////////
+    train_sampler = DistributedSampler(
+        trainset, num_replicas=1, rank=0, shuffle=True, seed=2048)
+    init_fn = partial(worker_init_fn, num_workers=16, rank=0, seed=2048)
+    train_loader = DataLoaderX(
+        local_rank=0,
+        dataset=trainset,
+        batch_size=cfg.batch_size,
+        sampler=train_sampler,
+        num_workers=16,
+        pin_memory=True,
+        drop_last=True,
+        worker_init_fn=init_fn,
+    )
     #   val //
 
     valset = FaceDataset(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_val.json", dict_class = class_dict)
@@ -196,6 +224,10 @@ def main():
         opt = torch.optim.AdamW(
             params=[{'params': model.parameters()}],
             lr=cfg.lr / 512 * cfg.batch_size)    
+    elif cfg.optimizer == 'adam':
+        opt = torch.optim.Adam(
+            params=[{'params': model.parameters()}],
+            lr=cfg.lr / 512 * cfg.batch_size)  
     else:
         raise
     # Loss function
@@ -215,7 +247,7 @@ def main():
             outputs = model(inputs)
 
             # loss = criterion(outputs, smoothed_labels)
-            loss = LSR2(0.3)(outputs, labels)
+            loss = LSR2(0.3, data_balance_weight_np)(outputs, labels)
             
             # Backward and optimize
             if cfg.fp16 == True:
