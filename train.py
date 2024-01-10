@@ -29,6 +29,9 @@ from backbones import get_model
 from lr_scheduler import build_scheduler
 from torch.autograd import Variable
 
+from sklearn.metrics import precision_recall_fscore_support
+import numpy as np
+
 torch.backends.cudnn.benchmark = True
 
 def ACLoss(att_map1, att_map2, grid_l, output):
@@ -52,10 +55,11 @@ def generate_flip_grid(w, h):
     return grid
 
 class LSR2(nn.Module):
-    def __init__(self, e):
+    def __init__(self, e, data_balance_weight_np):
         super().__init__()
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.e = e
+        self.data_balance_weight_np = data_balance_weight_np
 
     def _one_hot(self, labels, classes, value=1):
         one_hot = torch.zeros(labels.size(0), classes)
@@ -69,7 +73,7 @@ class LSR2(nn.Module):
     def _smooth_label(self, target, length, smooth_factor):
         one_hot = self._one_hot(target, length, value=1 - smooth_factor)
         mask = (one_hot==0)
-        balance_weight = torch.tensor([0.528, 1.587, 11.106, 0.346, 0.942, 0.633]).to(one_hot.device)
+        balance_weight = torch.tensor(self.data_balance_weight_np).to(one_hot.device)
         ex_weight = balance_weight.expand(one_hot.size(0),-1)
         resize_weight = ex_weight[mask].view(one_hot.size(0),-1)
         resize_weight /= resize_weight.sum(dim=1, keepdim=True)
@@ -83,7 +87,6 @@ class LSR2(nn.Module):
         x = self.log_softmax(x)
         loss = torch.sum(- x * smoothed_target, dim=1)
         return torch.mean(loss)
-    
 
 
 def save_model(model, optimizer, epoch, path):
@@ -93,26 +96,36 @@ def save_model(model, optimizer, epoch, path):
         'optimizer_state_dict': optimizer.state_dict(),
     }, path)
 
-def evaluate(model, val_loader, criterion):
+def evaluate(model, val_loader, criterion, num_classes):
     model.eval()  # Set the model to evaluation mode
     val_loss = 0.0
-    correct = 0
-    total = 0
+
+    # Prepare to track per-class metrics
+    all_labels = []
+    all_predictions = []
 
     with torch.no_grad():
-        for inputs, labels, inputs_flip in val_loader:
+        for inputs, labels in val_loader:
             inputs, labels = inputs.cuda(), labels.cuda()
             outputs, _ = model(inputs)
             loss = criterion(outputs, labels)
             val_loss += loss.item()
 
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            _, predicted = torch.max(outputs, 1)
+
+            all_labels.extend(labels.cpu().numpy())
+            all_predictions.extend(predicted.cpu().numpy())
 
     avg_loss = val_loss / len(val_loader)
-    accuracy = correct / total
-    return avg_loss, accuracy
+
+    # Calculate metrics per class
+    precision, recall, f1, _ = precision_recall_fscore_support(all_labels, all_predictions, labels=np.arange(num_classes), average=None)
+
+    # Calculating overall accuracy
+    accuracy = np.mean(np.array(all_labels) == np.array(all_predictions))
+
+    # Return the average loss, overall accuracy, and per-class metrics
+    return avg_loss, accuracy, precision, recall, f1
 
 class ClassificationModel(nn.Module):
     def __init__(self, backbone, cfg):
@@ -157,8 +170,11 @@ class ClassificationModel(nn.Module):
 
 def main():
 
+    if not os.path.exists(cfg.save_path):
+            os.makedirs(cfg.save_path)
     #   logging
-    log_filename = cfg.log
+    log_filename =   os.path.join(cfg.save_path, cfg.log)
+
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     fh = logging.FileHandler(log_filename)
@@ -169,7 +185,8 @@ def main():
     #   dataset
     print("------------------------------------------------------")
     class_dict = {'Teenager' : '0', '40-50s': '1', '20-30s': '2', 'Baby': '3', 'Kid': '4', 'Senior': '5'}
-    balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
+    # balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
+    data_balance_weight_np = [5, 2, 0.22977, 7.37, 3, 4.03]
     #   train   //
     trainset = FaceDataset(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_train.json", dict_class = class_dict)
 
@@ -245,10 +262,10 @@ def main():
             flip_loss = ACLoss(hm, hm_flip, grid_l, expression_output)    #N*num_class*num_class*num_class
 
             flip_loss = flip_loss.mean(dim=-1).mean(dim=-1) #N*num_class
-            balance_weight = torch.tensor(balance_weight_np).cuda().view(cfg.num_classes,1)
+            balance_weight = torch.tensor(data_balance_weight_np).cuda().view(cfg.num_classes,1)
             flip_loss = torch.mm(flip_loss, balance_weight).squeeze()
             
-            loss = LSR2(0.3)(expression_output, labels) + 0.1 * flip_loss.mean()
+            loss = LSR2(0.3, data_balance_weight_np)(expression_output, labels) + 0.1 * flip_loss.mean()
             
             if cfg.fp16 == True:
                 amp.scale(loss).backward()
@@ -265,11 +282,13 @@ def main():
             opt.zero_grad()
 
             if (i+1) % 100 == 0:
-                val_loss, val_accuracy = evaluate(model, val_loader, criterion)
+                val_loss, val_accuracy, precision, recall, f1 = evaluate(model, val_loader, criterion, cfg.num_classes)
                 logging.info("------------------------------------------------------")
                 logging.info(f'Epoch [{epoch+1}/{cfg.num_epoch}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
                 logging.info(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
-
+                logging.info(f'Precision per class: {precision}')
+                logging.info(f'Recall per class: {recall}')
+                logging.info(f'F1 Score per class: {f1}')
         # End of epoch
         epoch_time = time.time() - epoch_start_time
         time_est = epoch_time * (cfg.num_epoch - epoch) / 60
