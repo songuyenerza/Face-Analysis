@@ -10,23 +10,19 @@ import torch.utils.data as data
 
 import torch.distributed as dist
 import torch.nn.functional as F
-from torch.nn.parallel.distributed import DistributedDataParallel
 import torch.utils.data.distributed
-from torch.nn.utils import clip_grad_norm_
-from torch.nn import CrossEntropyLoss
 import torch.nn as nn
 from torch import distributed
 
 
-import losses
+# import losses
 from config import config as cfg
 from dataset import  DataLoaderX, FaceDataset
-from utils.utils_callbacks import CallBackLogging, CallBackVerification
-from utils.utils_logging import AverageMeter, init_logging
-from torch.distributed.algorithms.ddp_comm_hooks.default_hooks import fp16_compress_hook
+# from utils.utils_callbacks import CallBackLogging, CallBackVerification
+# from utils.utils_logging import AverageMeter, init_logging
 from backbones import get_model
 
-from lr_scheduler import build_scheduler
+# from lr_scheduler import build_scheduler
 from torch.autograd import Variable
 
 from sklearn.metrics import precision_recall_fscore_support
@@ -105,7 +101,7 @@ def evaluate(model, val_loader, criterion, num_classes):
     all_predictions = []
 
     with torch.no_grad():
-        for inputs, labels in val_loader:
+        for inputs, labels, _ in val_loader:
             inputs, labels = inputs.cuda(), labels.cuda()
             outputs, _ = model(inputs)
             loss = criterion(outputs, labels)
@@ -134,8 +130,7 @@ class ClassificationModel(nn.Module):
         self.fp16 = cfg.fp16
         #   if want freeze all backbone
         # self.freeze_backbone_custum()  # Freeze the backbone
-        #   ////////////////////////////
-        # Replace 'num_classes' with the actual number of classes
+
         self.head = nn.Linear(cfg.embedding_size, cfg.num_classes)
 
     def freeze_backbone(self):
