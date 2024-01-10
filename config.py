@@ -27,5 +27,5 @@ config.warmup_epoch = 0
 config.val_targets = []
 
 
-config.save_path = './model_age_v1_not_freeze'
+config.save_path = './output/model_age_v1_not_freeze'
 config.log = 'train.txt'

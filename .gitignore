@@ -4,3 +4,6 @@
 *.pth
 
 __pycache__/
+output/
+pretrained/
+*.txt
