@@ -156,7 +156,7 @@ def main():
     #   dataset
     print("------------------------------------------------------")
     class_dict = {'Teenager' : '0', '40-50s': '1', '20-30s': '2', 'Baby': '3', 'Kid': '4', 'Senior': '5'}
-    data_balance_weight_np = [5, 2, 0.22977, 7.37, 3, 4.03]
+    data_balance_weight_np = [4.999, 1.999, 0.231, 7.371, 3.001, 4.013]
     # data_balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
 
     #   train   //
