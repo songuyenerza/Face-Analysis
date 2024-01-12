@@ -40,6 +40,7 @@ class LSR2(nn.Module):
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.e = e
         self.data_balance_weight_np = data_balance_weight_np
+        self.balance_weights = torch.tensor(data_balance_weight_np).float().cuda()
 
     def _one_hot(self, labels, classes, value=1):
         one_hot = torch.zeros(labels.size(0), classes)
@@ -53,7 +54,7 @@ class LSR2(nn.Module):
     def _smooth_label(self, target, length, smooth_factor):
         one_hot = self._one_hot(target, length, value=1 - smooth_factor)
         mask = (one_hot==0)
-        balance_weight = torch.tensor(self.data_balance_weight_np).to(one_hot.device)
+        balance_weight = torch.tensor([0.528, 1.587, 11.106, 0.346, 0.942, 0.633]).to(one_hot.device)
         ex_weight = balance_weight.expand(one_hot.size(0),-1)
         resize_weight = ex_weight[mask].view(one_hot.size(0),-1)
         resize_weight /= resize_weight.sum(dim=1, keepdim=True)
@@ -66,7 +67,10 @@ class LSR2(nn.Module):
         smoothed_target = self._smooth_label(target, x.size(1), self.e)
         x = self.log_softmax(x)
         loss = torch.sum(- x * smoothed_target, dim=1)
-        return torch.mean(loss)
+        # Apply balance weights
+        batch_balance_weights = self.balance_weights[target]
+        weighted_loss = loss * batch_balance_weights
+        return torch.mean(weighted_loss)
 
 def save_model(model, optimizer, epoch, path):
     torch.save({
@@ -118,7 +122,7 @@ class ClassificationModel(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(cfg.embedding_size, 256),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(0.2),
             nn.Linear(256, cfg.num_classes)
         )
         # self.classifier = nn.Linear(cfg.embedding_size, cfg.num_classes)
@@ -157,29 +161,31 @@ def main():
     print("------------------------------------------------------")
     class_dict = {'Teenager' : '0', '40-50s': '1', '20-30s': '2', 'Baby': '3', 'Kid': '4', 'Senior': '5'}
     data_balance_weight_np = [4.999, 1.999, 0.231, 7.371, 3.001, 4.013]
-    # data_balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
+    # data_balance_weight_np = [6.555, 3.111, 0.231, 7.371, 3.001, 4.013]
 
+    # data_balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
+    
     #   train   //
     trainset = FaceDataset(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_train.json", dict_class = class_dict)
 
-    # train_loader = data.DataLoader(
-    #     dataset=trainset, batch_size=cfg.batch_size, shuffle=True,
-    #     num_workers=16, pin_memory=True, drop_last=True)
+    train_loader = data.DataLoader(
+        dataset=trainset, batch_size=cfg.batch_size, shuffle=True,
+        num_workers=24, pin_memory=True, drop_last=True)
 
     #   ///////////////////////////////////////
-    train_sampler = DistributedSampler(
-        trainset, num_replicas=1, rank=0, shuffle=True, seed=2048)
-    init_fn = partial(worker_init_fn, num_workers=16, rank=0, seed=2048)
-    train_loader = DataLoaderX(
-        local_rank=0,
-        dataset=trainset,
-        batch_size=cfg.batch_size,
-        sampler=train_sampler,
-        num_workers=16,
-        pin_memory=True,
-        drop_last=True,
-        worker_init_fn=init_fn,
-    )
+    # train_sampler = DistributedSampler(
+    #     trainset, num_replicas=1, rank=0, shuffle=True, seed=2048)
+    # init_fn = partial(worker_init_fn, num_workers=16, rank=0, seed=2048)
+    # train_loader = DataLoaderX(
+    #     local_rank=0,
+    #     dataset=trainset,
+    #     batch_size=cfg.batch_size,
+    #     sampler=train_sampler,
+    #     num_workers=16,
+    #     pin_memory=True,
+    #     drop_last=True,
+    #     worker_init_fn=init_fn,
+    # )
     #   val //
 
     valset = FaceDataset(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_val.json", dict_class = class_dict)
@@ -246,8 +252,8 @@ def main():
             # Forward pass
             outputs = model(inputs)
 
-            # loss = criterion(outputs, smoothed_labels)
-            loss = LSR2(0.3, data_balance_weight_np)(outputs, labels)
+            loss = criterion(outputs, labels)
+            # loss = LSR2(0.3, data_balance_weight_np)(outputs, labels)
             
             # Backward and optimize
             if cfg.fp16 == True:
@@ -276,7 +282,7 @@ def main():
         # End of epoch
         epoch_time = time.time() - epoch_start_time
         time_est = epoch_time * (cfg.num_epoch - epoch) / 3600
-        logging.info(f"Estimated time to finish : {time_est:.2f} hours")
+        logging.info(f"Estimated time to finish : {time_est:.2f} (hours)")
 
         if val_accuracy > best_val_accuracy:
             best_val_accuracy = val_accuracy

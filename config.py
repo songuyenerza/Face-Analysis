@@ -15,9 +15,9 @@ config.sample_rate = 1.0
 config.interclass_filtering_threshold = 0
 config.fp16 = True
 config.weight_decay = 5e-4
-config.batch_size = 64
-config.optimizer = "adamw"
-config.lr = 0.03
+config.batch_size = 128
+config.optimizer = "sgd"
+config.lr = 0.05
 config.verbose = 2000
 config.dali = False
 
@@ -27,5 +27,5 @@ config.warmup_epoch = 0
 config.val_targets = []
 
 
-config.save_path = './output/model_age_v1_not_freeze'
+config.save_path = './output/model_age_v3_110123'
 config.log = 'train.txt'
