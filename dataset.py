@@ -153,3 +153,57 @@ class FaceDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
+class FaceDatasetVal(Dataset):
+    def __init__(self, root_dir, json_path, dict_class, target_size=(112, 112)):
+        super(FaceDatasetVal, self).__init__()
+        #   augment
+
+        # Custom padding transform
+        self.padding_transform = transforms.Lambda(lambda img: self.pad_to_square(img))
+
+        self.transform = transforms.Compose(
+            [transforms.ToPILImage(),
+            self.padding_transform,
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(10),
+            transforms.Resize((120, 120)),
+            transforms.RandomCrop(target_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+            # transforms.RandomErasing(scale=(0.02, 0.1))
+            ])
+
+        self.dict_class = dict_class
+        self.root_dir = root_dir
+        
+        with open(json_path, 'r') as f:
+            self.data = json.load(f)
+
+    def pad_to_square(self, pil_img):
+        width, height = pil_img.size
+        max_wh = max(width, height)
+        hp = int((max_wh - width) / 2)
+        vp = int((max_wh - height) / 2)
+        padding = (hp, vp, hp, vp)  # left, top, right, bottom
+        # For grayscale padding value (128, 128, 128) or normalized (0.5, 0.5, 0.5)
+        padding_color = (128, 128, 128)
+        return transforms.functional.pad(pil_img, padding, padding_color, 'constant')
+
+    def __getitem__(self, index):
+        data_item = self.data[str(index)]
+        img = cv2.imread(os.path.join(self.root_dir, data_item['path']))
+
+        # end augment
+        sample = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+        #   //////////////////////////
+
+        label = int(self.dict_class[data_item['labels']])
+        label = torch.tensor(label, dtype=torch.long)
+        if self.transform is not None:
+            sample = self.transform(sample)
+        sample = torch.tensor(np.asarray(sample))
+        return sample, label
+
+    def __len__(self):
+        return len(self.data)

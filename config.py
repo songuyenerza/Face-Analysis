@@ -27,5 +27,5 @@ config.warmup_epoch = 0
 config.val_targets = []
 
 
-config.save_path = './output/model_age_v3_110123'
+config.save_path = './output/model_age_v0_130123'
 config.log = 'train.txt'

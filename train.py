@@ -17,9 +17,10 @@ from torch.nn import CrossEntropyLoss
 import torch.nn as nn
 from torch import distributed
 
+from tqdm import tqdm
 import losses
 from config import config as cfg
-from dataset import  DataLoaderX, FaceDataset
+from dataset import  DataLoaderX, FaceDataset, FaceDatasetVal
 from utils.utils_callbacks import CallBackLogging, CallBackVerification
 from utils.utils_logging import AverageMeter, init_logging
 from torch.distributed.algorithms.ddp_comm_hooks.default_hooks import fp16_compress_hook
@@ -31,6 +32,8 @@ from functools import partial
 
 from sklearn.metrics import precision_recall_fscore_support
 import numpy as np
+
+from backbones.face_feature_extractor import FeatureExtractor
 
 torch.backends.cudnn.benchmark = True
 
@@ -79,8 +82,8 @@ def save_model(model, optimizer, epoch, path):
         'optimizer_state_dict': optimizer.state_dict(),
     }, path)
 
-def evaluate(model, val_loader, criterion, num_classes):
-    model.eval()  # Set the model to evaluation mode
+def evaluate(model, backbone, val_loader, criterion, num_classes):
+    # model.eval()  # Set the model to evaluation mode
     val_loss = 0.0
 
     # Prepare to track per-class metrics
@@ -90,7 +93,9 @@ def evaluate(model, val_loader, criterion, num_classes):
     with torch.no_grad():
         for inputs, labels in val_loader:
             inputs, labels = inputs.cuda(), labels.cuda()
-            outputs = model(inputs)
+            feature = backbone.forward(inputs)
+            feature = torch.tensor(np.asarray(feature)).cuda()
+            outputs = model(feature)
             loss = criterion(outputs, labels)
             val_loss += loss.item()
 
@@ -111,12 +116,10 @@ def evaluate(model, val_loader, criterion, num_classes):
     return avg_loss, accuracy, precision, recall, f1
 
 class ClassificationModel(nn.Module):
-    def __init__(self, backbone, cfg):
+    def __init__(self, cfg):
         super(ClassificationModel, self).__init__()
-        self.backbone = backbone
         self.fp16 = cfg.fp16
         #   if want freeze all backbone
-        self.freeze_backbone()  # Freeze the backbone
         #   ////////////////////////////
         # Replace 'num_classes' with the actual number of classes
         self.classifier = nn.Sequential(
@@ -125,21 +128,8 @@ class ClassificationModel(nn.Module):
             nn.Dropout(0.2),
             nn.Linear(256, cfg.num_classes)
         )
-        # self.classifier = nn.Linear(cfg.embedding_size, cfg.num_classes)
 
-    def freeze_backbone(self):
-        for param in self.backbone.parameters():
-            param.requires_grad = False
-
-    def freeze_backbone_custum(self):
-        i = 0
-        for param in self.backbone.parameters():
-            i += 1
-            if i < 236: #459 
-                param.requires_grad = False
-
-    def forward(self, x):
-        features = self.backbone(x)
+    def forward(self, features):
         with torch.cuda.amp.autocast(self.fp16):
             out = self.classifier(features)
         output = out.float() if self.fp16 else out
@@ -160,8 +150,8 @@ def main():
     #   dataset
     print("------------------------------------------------------")
     class_dict = {'Teenager' : '0', '40-50s': '1', '20-30s': '2', 'Baby': '3', 'Kid': '4', 'Senior': '5'}
-    data_balance_weight_np = [4.999, 1.999, 0.231, 7.371, 3.001, 4.013]
-    # data_balance_weight_np = [6.555, 3.111, 0.231, 7.371, 3.001, 4.013]
+    # data_balance_weight_np = [4.999, 1.999, 0.231, 7.371, 3.001, 4.013]
+    data_balance_weight_np = [5.555, 2.111, 0.231, 7.371, 3.001, 4.013]
 
     # data_balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
     
@@ -188,7 +178,7 @@ def main():
     # )
     #   val //
 
-    valset = FaceDataset(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_val.json", dict_class = class_dict)
+    valset = FaceDatasetVal(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_val.json", dict_class = class_dict)
 
     val_loader = data.DataLoader(
         dataset=valset, batch_size=cfg.batch_size, shuffle=True,
@@ -198,11 +188,10 @@ def main():
     #   //////////////////
 
     #   Model
-    backbone = get_model(
-        cfg.network, dropout=0.0, fp16=cfg.fp16, num_features=cfg.embedding_size).cuda()
-    #   load backbone
-    backbone_pretrained = "./pretrained/r50_Glint360k_backbone.pth"
-    backbone.load_state_dict(torch.load(backbone_pretrained, map_location='cuda'))
+
+    backbone = FeatureExtractor(model_path='./pretrained/webface600_r50_fixoutput.onnx', 
+                            useGpu=True, index_gpu=0)
+
     logging.info("[init model ok]")
 
     logging.info(f"[config] {cfg}")
@@ -211,7 +200,7 @@ def main():
 
     # print(backbone)
     # Create the full model
-    model = ClassificationModel(backbone, cfg).cuda()
+    model = ClassificationModel(cfg).cuda()
     print("[init model ClassificationModel]")
     logging.info("[init model ClassificationModel]")
 
@@ -247,10 +236,13 @@ def main():
     best_val_accuracy = 0
     for epoch in range(cfg.num_epoch):  # Define num_epochs
         epoch_start_time = time.time()
-        for i, (inputs, labels) in enumerate(train_loader):
+        for i, (inputs, labels) in tqdm(enumerate(train_loader)):
             inputs, labels = inputs.cuda(), labels.cuda()
             # Forward pass
-            outputs = model(inputs)
+            feature = backbone.forward(inputs)
+            feature = torch.tensor(np.asarray(feature)).cuda()
+
+            outputs = model(feature)
 
             loss = criterion(outputs, labels)
             # loss = LSR2(0.3, data_balance_weight_np)(outputs, labels)
@@ -271,7 +263,7 @@ def main():
             
 
             if (i+1) % 100 == 0:
-                val_loss, val_accuracy, precision, recall, f1 = evaluate(model, val_loader, criterion, cfg.num_classes)
+                val_loss, val_accuracy, precision, recall, f1 = evaluate(model, backbone, val_loader, criterion, cfg.num_classes)
                 logging.info("------------------------------------------------------")
                 logging.info(f'Epoch [{epoch+1}/{cfg.num_epoch}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
                 logging.info(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
