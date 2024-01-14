@@ -149,9 +149,9 @@ def main():
     logger.addHandler(fh)
     #   dataset
     print("------------------------------------------------------")
-    class_dict = {'Teenager' : '0', '40-50s': '1', '20-30s': '2', 'Baby': '3', 'Kid': '4', 'Senior': '5'}
-    # data_balance_weight_np = [4.999, 1.999, 0.231, 7.371, 3.001, 4.013]
-    data_balance_weight_np = [5.555, 2.111, 0.231, 7.371, 3.001, 4.013]
+    class_dict = cfg.class_dict
+    data_balance_weight_np = cfg.data_balance_weight_np
+    # data_balance_weight_np = [5.555, 2.111, 0.231, 7.371, 3.001, 4.013]
 
     # data_balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
     
@@ -283,6 +283,8 @@ def main():
             save_path = os.path.join(cfg["save_path"], f'model.pth')
             save_model(model, opt, epoch, save_path)
             logging.info(f"Model saved: {save_path}")
+
+    logging.info(f"End traing >>>>>>>> best_val_accuracy: {best_val_accuracy}")
 
 if __name__ == "__main__":
     main()

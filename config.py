@@ -29,3 +29,6 @@ config.val_targets = []
 
 config.save_path = './output/model_age_v0_130123'
 config.log = 'train.txt'
+
+config.class_dict = {'Teenager' : '0', '40-50s': '1', '20-30s': '2', 'Baby': '3', 'Kid': '4', 'Senior': '5'}
+config.data_balance_weight_np = [4.999, 1.999, 0.231, 7.371, 3.001, 4.013]
