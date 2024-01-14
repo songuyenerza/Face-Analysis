@@ -57,7 +57,7 @@ class LSR2(nn.Module):
     def _smooth_label(self, target, length, smooth_factor):
         one_hot = self._one_hot(target, length, value=1 - smooth_factor)
         mask = (one_hot==0)
-        balance_weight = torch.tensor([0.528, 1.587, 11.106, 0.346, 0.942, 0.633]).to(one_hot.device)
+        balance_weight = torch.tensor(1/ np.array(self.data_balance_weight_np)).to(one_hot.device)
         ex_weight = balance_weight.expand(one_hot.size(0),-1)
         resize_weight = ex_weight[mask].view(one_hot.size(0),-1)
         resize_weight /= resize_weight.sum(dim=1, keepdim=True)
