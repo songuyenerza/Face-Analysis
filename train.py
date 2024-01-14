@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 from threading import local
@@ -8,27 +7,16 @@ import logging
 import torch
 import torch.utils.data as data
 
-import torch.distributed as dist
-import torch.nn.functional as F
 from torch.nn.parallel.distributed import DistributedDataParallel
 import torch.utils.data.distributed
-from torch.nn.utils import clip_grad_norm_
-from torch.nn import CrossEntropyLoss
 import torch.nn as nn
-from torch import distributed
 
 from tqdm import tqdm
-import losses
+import shultil
 from config import config as cfg
 from dataset import  DataLoaderX, FaceDataset, FaceDatasetVal
-from utils.utils_callbacks import CallBackLogging, CallBackVerification
-from utils.utils_logging import AverageMeter, init_logging
 from torch.distributed.algorithms.ddp_comm_hooks.default_hooks import fp16_compress_hook
-from backbones import get_model
 
-from utils.utils_distributed_sampler import DistributedSampler
-from utils.utils_distributed_sampler import get_dist_info, worker_init_fn
-from functools import partial
 
 from sklearn.metrics import precision_recall_fscore_support
 import numpy as np
@@ -138,6 +126,7 @@ class ClassificationModel(nn.Module):
 def main():
     if not os.path.exists(cfg.save_path):
         os.makedirs(cfg.save_path)
+    shultil.copy('config.py', cfg.save_path)
     #   logging
     log_filename =   os.path.join(cfg.save_path, cfg.log)
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
