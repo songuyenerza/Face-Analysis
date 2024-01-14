@@ -7,61 +7,21 @@ import logging
 import torch
 import torch.utils.data as data
 
-from torch.nn.parallel.distributed import DistributedDataParallel
 import torch.utils.data.distributed
 import torch.nn as nn
 
 from tqdm import tqdm
-import shultil
+import shutil
 from config import config as cfg
 from dataset import  DataLoaderX, FaceDataset, FaceDatasetVal
-from torch.distributed.algorithms.ddp_comm_hooks.default_hooks import fp16_compress_hook
-
 
 from sklearn.metrics import precision_recall_fscore_support
 import numpy as np
 
 from backbones.face_feature_extractor import FeatureExtractor
-
+from losses import LSR2
 torch.backends.cudnn.benchmark = True
 
-class LSR2(nn.Module):
-    def __init__(self, e, data_balance_weight_np):
-        super().__init__()
-        self.log_softmax = nn.LogSoftmax(dim=1)
-        self.e = e
-        self.data_balance_weight_np = data_balance_weight_np
-        self.balance_weights = torch.tensor(data_balance_weight_np).float().cuda()
-
-    def _one_hot(self, labels, classes, value=1):
-        one_hot = torch.zeros(labels.size(0), classes)
-        labels = labels.view(labels.size(0), -1)
-        value_added = torch.Tensor(labels.size(0), 1).fill_(value)
-        value_added = value_added.to(labels.device)
-        one_hot = one_hot.to(labels.device)
-        one_hot.scatter_add_(1, labels, value_added)
-        return one_hot
-
-    def _smooth_label(self, target, length, smooth_factor):
-        one_hot = self._one_hot(target, length, value=1 - smooth_factor)
-        mask = (one_hot==0)
-        balance_weight = torch.tensor(1/ np.array(self.data_balance_weight_np)).to(one_hot.device)
-        ex_weight = balance_weight.expand(one_hot.size(0),-1)
-        resize_weight = ex_weight[mask].view(one_hot.size(0),-1)
-        resize_weight /= resize_weight.sum(dim=1, keepdim=True)
-        one_hot[mask] += (resize_weight*smooth_factor).view(-1)
-        
-#         one_hot += smooth_factor / length
-        return one_hot.to(target.device)
-
-    def forward(self, x, target):
-        smoothed_target = self._smooth_label(target, x.size(1), self.e)
-        x = self.log_softmax(x)
-        loss = torch.sum(- x * smoothed_target, dim=1)
-        # Apply balance weights
-        batch_balance_weights = self.balance_weights[target]
-        weighted_loss = loss * batch_balance_weights
-        return torch.mean(weighted_loss)
 
 def save_model(model, optimizer, epoch, path):
     torch.save({
@@ -126,7 +86,7 @@ class ClassificationModel(nn.Module):
 def main():
     if not os.path.exists(cfg.save_path):
         os.makedirs(cfg.save_path)
-    shultil.copy('config.py', cfg.save_path)
+    shutil.copy('config.py', cfg.save_path)
     #   logging
     log_filename =   os.path.join(cfg.save_path, cfg.log)
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -140,9 +100,6 @@ def main():
     print("------------------------------------------------------")
     class_dict = cfg.class_dict
     data_balance_weight_np = cfg.data_balance_weight_np
-    # data_balance_weight_np = [5.555, 2.111, 0.231, 7.371, 3.001, 4.013]
-
-    # data_balance_weight_np = [0.528, 1.587, 11.106, 0.346, 0.942, 0.633]
     
     #   train   //
     trainset = FaceDataset(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_train.json", dict_class = class_dict)
@@ -165,8 +122,8 @@ def main():
     #     drop_last=True,
     #     worker_init_fn=init_fn,
     # )
-    #   val //
 
+    #   val //
     valset = FaceDatasetVal(root_dir=cfg.rec, json_path = "../../../data/face_cropped/age/data_age_val.json", dict_class = class_dict)
 
     val_loader = data.DataLoader(
@@ -186,8 +143,6 @@ def main():
     logging.info(f"[config] {cfg}")
 
 
-
-    # print(backbone)
     # Create the full model
     model = ClassificationModel(cfg).cuda()
     print("[init model ClassificationModel]")
